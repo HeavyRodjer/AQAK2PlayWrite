@@ -1,0 +1,55 @@
+# Maven
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+
+trigger:
+- main
+
+pool:
+  vmImage: windows-latest
+
+steps:
+- task: Maven@4
+  inputs:
+    mavenPomFile: 'pom.xml'
+    mavenOptions: '-Xmx3072m'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.11'
+    jdkArchitectureOption: 'x64'
+    publishJUnitResults: true
+    testResultsFiles: '/surefire-reports/TEST-*.xml'
+    goals: 'test'
+  continueOnError: true
+
+# - task: CopyFiles@2
+#   displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
+#   inputs:
+#     SourceFolder: '$(build.sourcesdirectory)'
+#     Contents:
+#      screenshots\
+#      target\surefire-reports\**
+#     TargetFolder: '$(Build.ArtifactStagingDirectory)'
+#   condition: succeededOrFailed()
+
+- script: |
+    ls -la
+    ls -la .\target
+    cp -r .\screenshots $(Build.ArtifactStagingDirectory)\screenshots
+    cp -r .\videos $(Build.ArtifactStagingDirectory)\videos
+    cp -r .\target\surefire-reports $(Build.ArtifactStagingDirectory)\surefire
+  displayName: 'Print current directory content and move results for publishing'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+  condition: succeededOrFailed()
+
+
+
+# - task: PublishBuildArtifacts@1
+#   inputs:
+#     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+#     ArtifactName: 'drop'
+#     publishLocation: 'Container'
